@@ -1,6 +1,10 @@
 from flask import Flask, request, jsonify
 import subprocess
 
+import os
+os.chmod("chess_game", 0o755)
+
+
 
 app = Flask(__name__)
 
