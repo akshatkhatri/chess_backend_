@@ -5,7 +5,7 @@ import subprocess
 app = Flask(__name__)
 
 engine = subprocess.Popen(
-    ['chess_game.exe'],  # Replace with actual filename
+    ['./chess_game'],  # Replace with actual filename
     stdin=subprocess.PIPE,
     stdout=subprocess.PIPE,
     stderr=subprocess.PIPE,
