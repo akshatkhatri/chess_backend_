@@ -1,12 +1,13 @@
 from flask import Flask, request, jsonify
 import subprocess
+from flask_cors import CORS
 
 import os
 os.chmod("chess_game", 0o755)
 
 
-
 app = Flask(__name__)
+CORS(app)
 
 engine = subprocess.Popen(
     ['./chess_game'],  # Replace with actual filename
