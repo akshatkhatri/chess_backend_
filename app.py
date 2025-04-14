@@ -1,45 +1,52 @@
 from flask import Flask, request, jsonify
-import subprocess
 from flask_cors import CORS
-
+import pexpect
 import os
-os.chmod("chess_game", 0o755)
-
 
 app = Flask(__name__)
 CORS(app)
 
-engine = subprocess.Popen(
-    ['./chess_game'],  # Replace with actual filename
-    stdin=subprocess.PIPE,
-    stdout=subprocess.PIPE,
-    stderr=subprocess.PIPE,
-    text=True,
-    bufsize=1
-)
+# Start the chess engine using pexpect
+engine = pexpect.spawn('./chess_game', encoding='utf-8', timeout=20)  # Add full path if needed
+
+# Send initial UCI command
+engine.sendline('uci')
+engine.expect('uciok')
+
+# Send isready to ensure it's ready
+engine.sendline('isready')
+engine.expect('readyok')
+
 
 def send_command(cmd):
-    engine.stdin.write(cmd + '\n')
-    engine.stdin.flush()
+    engine.sendline(cmd)
+
 
 def read_response():
     response = []
+
     while True:
-        line = engine.stdout.readline().strip()
-        if line == 'readyok' or line.startswith('bestmove'):
+        try:
+            line = engine.readline().strip()
             print(">>", line)
             response.append(line)
+
+            if line == 'readyok' or line.startswith('bestmove') or line == 'uciok':
+                break
+
+        except pexpect.exceptions.TIMEOUT:
             break
-        if line:
-            response.append(line)
-        if line == "uciok" or line == "Set":
+        except pexpect.exceptions.EOF:
+            response.append("[Engine closed unexpectedly]")
             break
 
     return response
 
+
 @app.route("/")
 def hello_world():
     return "<p>Hello, Worldddd!</p>"
+
 
 @app.route('/uci', methods=['POST'])
 def uci_command():
@@ -50,9 +57,9 @@ def uci_command():
 
     send_command(command)
     output = read_response()
-    print(output)
     return jsonify({"response": output})
+
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))  # Render provides the port via env variable
-    app.run(debug=False, host='0.0.0.0', port=port)
+    app.run(debug=False, host='0.0.0.0', port=port, threaded=True)
