@@ -6,9 +6,17 @@ import os
 app = Flask(__name__)
 CORS(app)
 
+# Map start of command to the expected end marker
+END_MARKERS = {
+    "uci": "uciok",
+    "isready": "readyok",
+    "position": "Set",
+    "go": "bestmove"
+}
+
 def init_engine():
     try:
-        engine = pexpect.spawn('./chess_game', encoding='utf-8', timeout=None)  # Wait as long as needed
+        engine = pexpect.spawn('./chess_game', encoding='utf-8', timeout=None)
         engine.sendline('uci')
         engine.expect('uciok')
         engine.sendline('isready')
@@ -17,7 +25,13 @@ def init_engine():
     except Exception as e:
         raise RuntimeError(f"Failed to initialize engine: {e}")
 
-def read_response(engine):
+def get_expected_marker(command):
+    for prefix in END_MARKERS:
+        if command.startswith(prefix):
+            return END_MARKERS[prefix]
+    return None
+
+def read_response(engine, expected_marker):
     response = []
 
     while True:
@@ -26,7 +40,8 @@ def read_response(engine):
             print(">>", line)
             response.append(line)
 
-            if line in ['readyok', 'uciok','Set'] or line.startswith('bestmove'):
+            # Break if expected response seen
+            if expected_marker and (line == expected_marker or line.startswith(expected_marker)):
                 break
 
         except pexpect.exceptions.TIMEOUT:
@@ -56,10 +71,11 @@ def uci_command():
 
         for cmd in commands:
             engine.sendline(cmd)
-            resp = read_response(engine)
+            marker = get_expected_marker(cmd)
+            resp = read_response(engine, marker)
             full_response.append({cmd: resp})
 
-        engine.terminate()  # Clean up
+        engine.terminate()
         return jsonify({"responses": full_response})
 
     except Exception as e:
