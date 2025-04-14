@@ -32,11 +32,13 @@ def get_expected_marker(command):
     return None
 
 def read_response(engine, sent_command=None):
+    print(f"Sent command: {sent_command}")
     response = []
 
     while True:
         try:
             line = engine.readline().strip()
+            print(f"Received line: {line}")
             print(">>", line)  # Log the response line
 
             # Skip the sent command if echoed back
@@ -50,9 +52,11 @@ def read_response(engine, sent_command=None):
                 break
 
         except pexpect.exceptions.TIMEOUT:
+            print("[TIMEOUT ERROR] Waiting for response...")
             response.append("[Timeout while waiting for response]")
             break
         except pexpect.exceptions.EOF:
+            print("[EOF ERROR] Engine closed unexpectedly")
             response.append("[Engine closed unexpectedly]")
             break
 
@@ -87,6 +91,9 @@ def uci_command():
         return jsonify({"error": str(e)}), 500
 
 
-if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
-    app.run(debug=False, host='0.0.0.0', port=port, threaded=True)
+# if __name__ == '__main__':
+#     port = int(os.environ.get("PORT", 5000))
+#     app.run(debug=False, host='0.0.0.0', port=port, threaded=True)
+
+if __name__ == "__main__":
+    app.run(debug=True, host='0.0.0.0', port=5000)
