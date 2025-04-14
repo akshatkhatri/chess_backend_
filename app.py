@@ -97,5 +97,5 @@ def uci_command():
 
 if __name__ == "__main__":
     # Use the port from the environment variable, default to 5000 if not set
-    port = int(os.getenv("PORT", 5000))
-    app.run(debug=True, host='0.0.0.0', port=port)
+    # port = int(os.getenv("PORT", 5000))
+    app.run(debug=True, host='0.0.0.0', port=5000)
