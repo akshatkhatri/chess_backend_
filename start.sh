@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source venv/bin/activate
+
 apt-get update
 apt-get install -y g++ make libstdc++6
 # Compile your C++ chess engine
