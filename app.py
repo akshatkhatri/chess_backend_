@@ -3,7 +3,6 @@ from flask_cors import CORS
 import pexpect
 import os
 
-os.chmod("chess_game", 0o755)
 app = Flask(__name__)
 CORS(app)
 
