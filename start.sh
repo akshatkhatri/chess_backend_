@@ -14,4 +14,6 @@ export FLASK_APP=app.py
 export FLASK_ENV=production  # Set to 'development' for local testing
 
 # Run the Flask app
-flask run --host=0.0.0.0 --port=$PORT
+gunicorn app:app --bind 0.0.0.0:$PORT
+chmod +x start.sh
+

@@ -7,7 +7,7 @@ app = Flask(__name__)
 CORS(app)
 
 # Start the chess engine using pexpect
-engine = pexpect.spawn('./chess_game', encoding='utf-8', timeout=20)  # Add full path if needed
+engine = pexpect.spawn('./chess_game', encoding='utf-8', timeout=None)  # Add full path if needed
 
 # Send initial UCI command
 engine.sendline('uci')
