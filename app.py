@@ -31,17 +31,22 @@ def get_expected_marker(command):
             return END_MARKERS[prefix]
     return None
 
-def read_response(engine, expected_marker):
+def read_response(engine, sent_command=None):
     response = []
 
     while True:
         try:
             line = engine.readline().strip()
-            print(">>", line)
-            response.append(line)
+            print(">>", line)  # Log the response line
 
-            # Break if expected response seen
-            if expected_marker and (line == expected_marker or line.startswith(expected_marker)):
+            # Skip the sent command if echoed back
+            if line == sent_command:
+                continue
+            if line:
+                response.append(line)
+
+            # Stop if we encounter a response like 'uciok' or 'readyok'
+            if line in ['readyok', 'uciok', 'Set'] or line.startswith('bestmove'):
                 break
 
         except pexpect.exceptions.TIMEOUT:
@@ -52,6 +57,7 @@ def read_response(engine, expected_marker):
             break
 
     return response
+
 
 @app.route("/")
 def hello_world():
@@ -71,15 +77,15 @@ def uci_command():
 
         for cmd in commands:
             engine.sendline(cmd)
-            marker = get_expected_marker(cmd)
-            resp = read_response(engine, marker)
+            resp = read_response(engine, sent_command=cmd)  # Pass the sent command
             full_response.append({cmd: resp})
 
-        engine.terminate()
+        engine.terminate()  # Clean up
         return jsonify({"responses": full_response})
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
