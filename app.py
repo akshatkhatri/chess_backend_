@@ -6,23 +6,18 @@ import os
 app = Flask(__name__)
 CORS(app)
 
-# Start the chess engine using pexpect
-engine = pexpect.spawn('./chess_game', encoding='utf-8', timeout=60)  # Add full path if needed
+def init_engine():
+    try:
+        engine = pexpect.spawn('./chess_game', encoding='utf-8', timeout=None)  # Wait as long as needed
+        engine.sendline('uci')
+        engine.expect('uciok')
+        engine.sendline('isready')
+        engine.expect('readyok')
+        return engine
+    except Exception as e:
+        raise RuntimeError(f"Failed to initialize engine: {e}")
 
-# Send initial UCI command
-engine.sendline('uci')
-engine.expect('uciok')
-
-# Send isready to ensure it's ready
-engine.sendline('isready')
-engine.expect('readyok')
-
-
-def send_command(cmd):
-    engine.sendline(cmd)
-
-
-def read_response():
+def read_response(engine):
     response = []
 
     while True:
@@ -31,10 +26,11 @@ def read_response():
             print(">>", line)
             response.append(line)
 
-            if line == 'readyok' or line.startswith('bestmove') or line == 'uciok':
+            if line in ['readyok', 'uciok'] or line.startswith('bestmove'):
                 break
 
         except pexpect.exceptions.TIMEOUT:
+            response.append("[Timeout while waiting for response]")
             break
         except pexpect.exceptions.EOF:
             response.append("[Engine closed unexpectedly]")
@@ -42,28 +38,33 @@ def read_response():
 
     return response
 
-
 @app.route("/")
 def hello_world():
-    return "<p>Hello, Worldddd!</p>"
-
+    return "<p>Hello from your UCI Chess Server!</p>"
 
 @app.route('/uci', methods=['POST'])
 def uci_command():
     try:
         data = request.get_json()
-        command = data.get("command")
-        if not command:
-            return jsonify({"error": "No command provided"}), 400
+        commands = data.get("commands")
 
-        send_command(command)
-        output = read_response()
-        return jsonify({"response": output})
+        if not commands or not isinstance(commands, list):
+            return jsonify({"error": "Please provide a list of UCI commands as 'commands'"}), 400
+
+        engine = init_engine()
+        full_response = []
+
+        for cmd in commands:
+            engine.sendline(cmd)
+            resp = read_response(engine)
+            full_response.append({cmd: resp})
+
+        engine.terminate()  # Clean up
+        return jsonify({"responses": full_response})
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
-
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))  # Render provides the port via env variable
+    port = int(os.environ.get("PORT", 5000))
     app.run(debug=False, host='0.0.0.0', port=port, threaded=True)
