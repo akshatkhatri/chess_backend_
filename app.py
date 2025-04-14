@@ -26,7 +26,7 @@ def read_response(engine):
             print(">>", line)
             response.append(line)
 
-            if line in ['readyok', 'uciok'] or line.startswith('bestmove'):
+            if line in ['readyok', 'uciok','Set'] or line.startswith('bestmove'):
                 break
 
         except pexpect.exceptions.TIMEOUT:
