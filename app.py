@@ -7,7 +7,7 @@ app = Flask(__name__)
 CORS(app)
 
 # Start the chess engine using pexpect
-engine = pexpect.spawn('./chess_game', encoding='utf-8', timeout=None)  # Add full path if needed
+engine = pexpect.spawn('./chess_game', encoding='utf-8', timeout=60)  # Add full path if needed
 
 # Send initial UCI command
 engine.sendline('uci')
@@ -50,14 +50,18 @@ def hello_world():
 
 @app.route('/uci', methods=['POST'])
 def uci_command():
-    data = request.get_json()
-    command = data.get("command")
-    if not command:
-        return jsonify({"error": "No command provided"}), 400
+    try:
+        data = request.get_json()
+        command = data.get("command")
+        if not command:
+            return jsonify({"error": "No command provided"}), 400
 
-    send_command(command)
-    output = read_response()
-    return jsonify({"response": output})
+        send_command(command)
+        output = read_response()
+        return jsonify({"response": output})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 
 if __name__ == '__main__':
