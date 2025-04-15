@@ -183,12 +183,14 @@ int main()
                 while (parts-- && iss >> temp)
                     fen += temp + " ";
                 construct_board_from_fen(board, fen);
+                display_board(board,chess_pieces);
 
                 std::istringstream fen_stream(fen);
                 std::string piece_placement, active_color, castling_rights, en_passant, halfmove, fullmove;
                 fen_stream >> piece_placement >> active_color >> castling_rights >> en_passant >> halfmove >> fullmove;
 
-                int turn_count = (active_color == "w") ? 1 : 2;
+                move_count = (active_color == "w") ? 2 : 1;
+                std::cout<<move_count<<std::endl;
 
                 _white_king_moved = true;
                 _white_king_side_rook_moved = true;
@@ -274,6 +276,7 @@ int main()
                 dest_j = prev_move_end[2] - '0';
             }
 
+            std::cout<<move_count<<std::endl;
             std::string best_move = minimax_driver(fixed_depth, board, prev_i, prev_j, dest_i, dest_j, (move_count % 2 == 0) ? 'W' : 'B',_white_king_moved,_white_king_side_rook_moved,_white_queen_side_rook_moved,_black_king_moved,_black_king_side_rook_moved,_black_queen_side_rook_moved);
 
             std::string best_UCI_move = convert_indices_to_UCI(best_move.substr(0, 3), best_move.substr(4));
