@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chess Game</title>
+  
+  <!-- Load Chessboard.js CSS -->
+  <link rel="stylesheet" 
+        href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css"
+        integrity="sha384-q94+BZtLrkL1/ohfjR8c6L+A6qzNH9R2hBLwyoAfu3i/WCvQjzL2RQJ3uNHDISdU"
+        crossorigin="anonymous">
+  
+  <!-- Other styles -->
+  <style>
+    #myBoard {
+      width: 400px;
+      height: 400px;
+      margin: 0 auto;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Chess Game</h1>
+
+  <div id="myBoard"></div>
+
+  <button id="move1Btn">Move e2-e4</button>
+  <button id="move2Btn">Move d2-d4</button>
+  <button id="startPositionBtn">Start Position</button>
+  <button id="bestMoveBtn">Get Best Move</button>
+
+  <!-- Load jQuery -->
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"
+          integrity="sha384-ZvpUoO/+PpLXR1lu4jmpXWu80pZlYUAfxl5NsBMWOEPSjUn/6Z/hRTt8+pR6L4N2"
+          crossorigin="anonymous"></script>
+
+  <!-- Load Chessboard.js -->
+  <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"
+          integrity="sha384-8Vi8VHwn3vjQ9eUHUxex3JSN/NFqUg3QbPyX8kWyb93+8AC/pPWTzj+nHtbC5bxD"
+          crossorigin="anonymous"></script>
+
+  <!-- Chess.js library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+
+  <script>
+    // Initialize the chessboard
+    var board = Chessboard('myBoard', {
+      draggable: true,
+      dropOffBoard: 'trash',
+      sparePieces: true
+    });
+
+    // Initialize chess.js game object
+    var game = new Chess();
+
+    // Log to verify board is initialized
+    console.log(board);
+    
+    // Move e2-e4 when button clicked
+    document.getElementById('move1Btn').addEventListener('click', function () {
+      console.log("Moving e2 to e4...");
+      game.move('e2e4');
+      board.position(game.fen());
+      console.log("Current FEN:", game.fen());
+    });
+
+    // Move d2-d4 when button clicked
+    document.getElementById('move2Btn').addEventListener('click', function () {
+      console.log("Moving d2 to d4...");
+      game.move('d2d4');
+      board.position(game.fen());
+      console.log("Current FEN:", game.fen());
+    });
+
+    // Start position reset
+    document.getElementById('startPositionBtn').addEventListener('click', function () {
+      console.log("Resetting the board...");
+      game.reset();
+      board.position(game.fen());
+      console.log("Current FEN:", game.fen());
+    });
+
+    // Get the best move from your backend
+    document.getElementById('bestMoveBtn').addEventListener('click', function () {
+      const fen = game.fen(); // get current board state in FEN
+      console.log("Sending request with FEN:", fen);
+
+      const requestPayload = {
+        commands: [
+          "uci",
+          "isready",
+          "position fen " + fen,
+          "go"
+        ]
+      };
+
+      fetch('http://4.240.89.99:5000/uci', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestPayload)
+      })
+      .then(response => response.json())
+      .then(data => {
+        console.log("Received response:", data);
+        const responses = data.responses;
+        const last = responses[responses.length - 1];
+        const bestmoveStr = last.go[0]; // e.g., "bestmove f3e5"
+        const bestmove = bestmoveStr.split(' ')[1];
+        const from = bestmove.substring(0, 2);
+        const to = bestmove.substring(2, 4);
+
+        // Make the best move
+        game.move({ from, to });
+        board.position(game.fen());
+        console.log("Best move made:", bestmove);
+      })
+      .catch(error => {
+        console.error('Error:', error);
+      });
+    });
+
+    // Initial board setup
+    board.position(game.fen());
+    console.log("Board initialized with FEN:", game.fen());
+  </script>
+</body>
+</html>

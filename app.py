@@ -67,8 +67,10 @@ def read_response(engine, sent_command=None):
 def hello_world():
     return "<p>Hello from your UCI Chess Server!</p>"
 
-@app.route('/uci', methods=['POST'])
+@app.route('/uci', methods=['POST','OPTIONS'])
 def uci_command():
+    if request.method == 'OPTIONS':
+        return '',200
     try:
         data = request.get_json()
         commands = data.get("commands")
