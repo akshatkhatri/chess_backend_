@@ -18,6 +18,7 @@ export FLASK_ENV=production  # Set to 'development' for local testing
 
 # Run the Flask app
 export PORT=5000  # Or any valid port number of your choice
-gunicorn app:app --bind 0.0.0.0:5000
+gunicorn app:app --bind 0.0.0.0:5000 --timeout 300
+
 
 
